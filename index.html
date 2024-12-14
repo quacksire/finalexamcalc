@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Final Exam Class Grade Calculator</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+    <script>
+        function calculateMinimumScore() {
+            // User inputs
+            const edfinityScore = parseFloat(document.getElementById("score1").value) || 0;
+            const quizScore = parseFloat(document.getElementById("score2").value) || 0;
+            const midtermScores = [
+                parseFloat(document.getElementById("score3").value) || 0,
+                parseFloat(document.getElementById("score4").value) || 0,
+                parseFloat(document.getElementById("midterm").value) || 0
+            ];
+
+            const lowestMidtermScore = Math.min(...midtermScores);
+            const sumOfMidterms = midtermScores.reduce((a, b) => a + b, 0);
+            const otherMidterms = sumOfMidterms - lowestMidtermScore;
+
+            const midtermTotal = 90;
+            const finalExamTotal = 210;
+            const requiredPoints = parseFloat(document.getElementById("gradeValue").value) || 378;
+
+            // Current points without final exam and without deciding on midterm replacement
+            const currentPointsWithoutMidterms = edfinityScore + quizScore + otherMidterms;
+
+            for (let finalExamScore = 0; finalExamScore <= finalExamTotal; finalExamScore++) {
+                const finalExamPercentage = finalExamScore / finalExamTotal;
+
+                // Check if the final exam percentage is greater than the lowest midterm percentage
+                let replacedMidtermScore;
+                if (finalExamPercentage > (lowestMidtermScore / midtermTotal)) {
+                    // Replace the lowest midterm with the scaled final exam percentage
+                    replacedMidtermScore = finalExamPercentage * midtermTotal;
+                } else {
+                    // Keep the lowest midterm score as is
+                    replacedMidtermScore = lowestMidtermScore;
+                }
+
+                // Total points after considering final exam and possible replacement
+                const totalPoints = currentPointsWithoutMidterms + replacedMidtermScore + finalExamScore;
+
+                if (totalPoints >= requiredPoints) {
+                    const finalExamPercent = ((finalExamScore / finalExamTotal) * 100).toFixed(2);
+                    const resultCard = document.getElementById("result");
+                    resultCard.innerHTML = `<strong>You need a minimum score of... 🥁<h2>${finalExamScore} out of ${finalExamTotal} (${finalExamPercent}%)</h2>...on your final exam to achieve the selected grade.</strong>`;
+                    resultCard.classList.add("fade-in");
+                    return;
+                }
+            }
+
+            const resultCard = document.getElementById("result");
+            resultCard.innerHTML = `<strong>It is not possible to achieve the selected grade with the given inputs.</strong>`;
+            resultCard.classList.add("fade-in");
+        }
+
+        function updateGradeSlider(value) {
+            const gradeMapping = [
+                { grade: "A plus", min: 570, max: 600 },
+                { grade: "A", min: 540, max: 569 },
+                { grade: "A minus", min: 510, max: 539 },
+                { grade: "B plus", min: 480, max: 509 },
+                { grade: "B", min: 450, max: 479 },
+                { grade: "B minus", min: 420, max: 449 },
+                { grade: "C plus", min: 402, max: 419 },
+                { grade: "C", min: 378, max: 401 },
+                { grade: "C minus", min: 360, max: 377 }
+            ];
+
+            document.getElementById("gradeValue").value = value;
+
+            const grade = gradeMapping.find(gradeItem => value >= gradeItem.min && value <= gradeItem.max);
+            const label = grade ? `${grade.grade} ${value == grade.min ? "(lowest)" : value == grade.max ? "(highest)" : ""}` : "N/A";
+            document.getElementById("gradeOutput").innerText = `Points: ${value}, Grade: ${label}`;
+
+            // Highlight the single active grade button
+            document.querySelectorAll(".grade-button").forEach(button => {
+                button.classList.remove("active");
+            });
+            if (grade) {
+                const activeButton = Array.from(document.querySelectorAll(".grade-button"))
+                    .find(button => button.textContent.trim().toLowerCase() === grade.grade.replace(" plus", "+").replace(" minus", "-").toLowerCase());
+                if (activeButton) {
+                    activeButton.classList.add("active");
+                }
+            }
+        }
+
+        function setGradeRange(grade) {
+            const gradeMapping = {
+                "A plus": 570,
+                "A": 540,
+                "A minus": 510,
+                "B plus": 480,
+                "B": 450,
+                "B minus": 420,
+                "C plus": 402,
+                "C": 378,
+                "C minus": 360
+            };
+            if (gradeMapping[grade] !== undefined) {
+                document.getElementById("gradeSlider").value = gradeMapping[grade];
+                document.getElementById("gradeValue").value = gradeMapping[grade];
+                updateGradeSlider(gradeMapping[grade]);
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --light-bg: #f0f8ff;
+            --light-text: #000;
+            --dark-bg: #2e2e2e;
+            --dark-text: #fff;
+        }
+
+        body {
+            transition: background-color 0.5s, color 0.5s;
+        }
+
+        .active {
+            background-color: #007BFF;
+            color: white;
+        }
+
+        input[type="number"] {
+            width: 75px;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #007BFF;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
+        }
+
+        #result.fade-in {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        @media (prefers-color-scheme: light) {
+            #result {
+                background-color: var(--light-bg);
+                color: var(--light-text);
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            #result {
+                background-color: var(--dark-bg);
+                color: var(--dark-text);
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Final Exam Class Grade Calculator - Fall 2024</h1>
+    <p>This calculator, designed for Math 31 Fall 2024, will calculate what you need to get on the final exam to get the grade you want. It uses Prof. Van Der Poel's course grading policies from her syllabus, notably the replacement of a midterm percentage with the final percentage if your final grade is higher.</p>
+    <h2>Grade Sheet</h2>
+    <h3>Please enter the grades from your Grade Sheet below.</h4>
+    <form onsubmit="event.preventDefault(); calculateMinimumScore();">
+        <div style="display: flex; gap: 1rem;">
+            <div>
+                <label for="score1">Edfinity Total Score:</label>
+                <input type="number" id="score1" step="0.001" required>
+            </div>
+            <div>
+                <label for="score2">Quiz Total Score:</label>
+                <input type="number" id="score2" step="0.001" required>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 1rem;">
+            <div>
+                <label for="score3">Midterm 1 Score:</label>
+                <input type="number" id="score3" step="0.001" required>
+            </div>
+            <div>
+                <label for="score4">Midterm 2 Score:</label>
+                <input type="number" id="score4" step="0.001" required>
+            </div>
+            <div>
+                <label for="midterm">Midterm 3 Score:</label>
+                <input type="number" id="midterm" step="0.001" required>
+            </div>
+        </div>
+
+        <h2>Desired Class Grade</h2>
+        <h4>What grade would you like?</h4>
+
+        <div style="margin-bottom: 1rem;">
+            <h3>A Grades</h3>
+            <button type="button" class="grade-button" onclick="setGradeRange('A plus')">A+</button>
+            <button type="button" class="grade-button" onclick="setGradeRange('A')">A</button>
+            <button type="button" class="grade-button" onclick="setGradeRange('A minus')">A-</button>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+            <h3>B Grades</h3>
+            <button type="button" class="grade-button" onclick="setGradeRange('B plus')">B+</button>
+            <button type="button" class="grade-button" onclick="setGradeRange('B')">B</button>
+            <button type="button" class="grade-button" onclick="setGradeRange('B minus')">B-</button>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+            <h3>C Grades</h3>
+            <button type="button" class="grade-button" onclick="setGradeRange('C plus')">C+</button>
+            <button type="button" class="grade-button" onclick="setGradeRange('C')">C</button>
+            <button type="button" class="grade-button" onclick="setGradeRange('C minus')">C-</button>
+        </div>
+
+        <label for="gradeSlider"><b>Adjust Points Manually</b></label>
+        <input type="range" id="gradeSlider" min="360" max="600" step="1" value="378" oninput="updateGradeSlider(this.value)">
+        <input type="number" id="gradeValue" min="360" max="600" step="1" value="378" oninput="updateGradeSlider(this.value)">
+        <p id="gradeOutput">Points: 378, Grade: C (lowest)</p>
+
+        <button type="submit">Calculate</button>
+    </form>
+    <div id="result"></div>
+
+    <h4>Important Notices</h4>
+    <p>Please do not fully rely just on this calculator: while I have triple-checked its logic, my advice is to try to earn higher than what you get here.</p>
+    <p>This software is provided as-is, without any warranty of any kind.</p>
+    <p>Have a good night, study well, and see you tomorrow morning!</p>
+
+    <a href="https://links.burrito.software">...and while you take breaks, why not check me out on social media?</a>
+    <br>
+    <br>
+    <a href="https://github.com/burritosoftware/finalexamcalc">...or you can check out the source code, if you're into that.</a>
+
+    <!-- Cloudflare Web Analytics -->
+    <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4b847ff884954bce98a1e2b001fd9004"}'></script>
+    <!-- End Cloudflare Web Analytics -->
+</body>
+</html>
